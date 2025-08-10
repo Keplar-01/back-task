@@ -2,12 +2,12 @@
 
 declare(strict_types = 1);
 
-namespace Raketa\BackendTestTask\Repository;
+namespace Raketa\BackendTestTask\Manager;
 
 use Exception;
 use Psr\Log\LoggerInterface;
 use Raketa\BackendTestTask\Domain\Cart;
-use Raketa\BackendTestTask\Infrastructure\ConnectorFacade;
+use Raketa\BackendTestTask\Infrastructure\Redis\ConnectorFacade;
 
 class CartManager extends ConnectorFacade
 {

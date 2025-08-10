@@ -6,7 +6,8 @@ namespace Raketa\BackendTestTask\Controller;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Raketa\BackendTestTask\Repository\CartManager;
+use Raketa\BackendTestTask\Infrastructure\Http\JsonResponse;
+use Raketa\BackendTestTask\Manager\CartManager;
 use Raketa\BackendTestTask\View\CartView;
 
 readonly class GetCartController
