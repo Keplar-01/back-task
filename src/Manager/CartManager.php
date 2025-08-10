@@ -7,46 +7,51 @@ namespace Raketa\BackendTestTask\Manager;
 use Exception;
 use Psr\Log\LoggerInterface;
 use Raketa\BackendTestTask\Domain\Cart;
-use Raketa\BackendTestTask\Infrastructure\Redis\ConnectorFacade;
+use Raketa\BackendTestTask\Infrastructure\Redis\Connector;
+use Raketa\BackendTestTask\Infrastructure\Redis\ConnectorException;
 
-class CartManager extends ConnectorFacade
+readonly class CartManager
 {
-    public $logger;
 
-    public function __construct($host, $port, $password)
-    {
-        parent::__construct($host, $port, $password, 1);
-        parent::build();
-    }
+    public function __construct(
+        private Connector       $connector,
+        private LoggerInterface $logger,
+    )
+    {}
 
-    public function setLogger(LoggerInterface $logger)
-    {
-        $this->logger = $logger;
-    }
 
     /**
      * @inheritdoc
      */
-    public function saveCart(Cart $cart)
+    public function saveCart(Cart $cart): void
     {
         try {
-            $this->connector->set($cart, session_id());
-        } catch (Exception $e) {
-            $this->logger->error('Error');
+            $this->connector->set(session_id(), $cart);
+        } catch (ConnectorException $ex) {
+            $this->logger->error('Failed to save cart to Redis.', [
+                'cart_uuid' => $cart->getUuid(),
+                'session_id' => session_id(),
+                'error' => $ex->getMessage(),
+            ]);
         }
     }
 
     /**
      * @return ?Cart
      */
-    public function getCart()
+    public function getCart(): ?Cart
     {
         try {
-            return $this->connector->get(session_id());
-        } catch (Exception $e) {
-            $this->logger->error('Error');
+            $cart = $this->connector->get(session_id());
+
+            return $cart !== null ? $cart : null;
+        } catch (Exception $ex) {
+            $this->logger->error('Failed to get cart from Redis.', [
+                'session_id' => session_id(),
+                'error' => $ex->getMessage(),
+            ]);
         }
 
-        return new Cart(session_id(), []);
+        return null;
     }
 }
