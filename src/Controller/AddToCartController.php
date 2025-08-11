@@ -1,38 +1,40 @@
 <?php
+declare(strict_types = 1);
 
 namespace Raketa\BackendTestTask\Controller;
 
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
-use Raketa\BackendTestTask\Domain\CartItem;
-use Raketa\BackendTestTask\Repository\CartManager;
-use Raketa\BackendTestTask\Repository\ProductRepository;
+use Raketa\BackendTestTask\Infrastructure\Http\JsonResponse;
+use Raketa\BackendTestTask\Service\CartService;
 use Raketa\BackendTestTask\View\CartView;
 use Ramsey\Uuid\Uuid;
 
 readonly class AddToCartController
 {
     public function __construct(
-        private ProductRepository $productRepository,
-        private CartView $cartView,
-        private CartManager $cartManager,
-    ) {
+        private CartService $cartService,
+        private CartView    $cartView
+    )
+    {
     }
 
-    public function get(RequestInterface $request): ResponseInterface
+    public function add(RequestInterface $request): ResponseInterface
     {
         $rawRequest = json_decode($request->getBody()->getContents(), true);
-        $product = $this->productRepository->getByUuid($rawRequest['productUuid']);
-
-        $cart = $this->cartManager->getCart();
-        $cart->addItem(new CartItem(
-            Uuid::uuid4()->toString(),
-            $product->getUuid(),
-            $product->getPrice(),
-            $rawRequest['quantity'],
-        ));
-
+        $cart = $this->cartService->addProductToCart($rawRequest['productUuid'], $rawRequest['quantity']);
         $response = new JsonResponse();
+
+        if ($cart === null) {
+            return $response->getBody()->write(
+                json_encode(
+                    ['message' => 'Failed to add product to cart'],
+                    JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES
+                ))
+                ->withHeader('Content-Type', 'application/json; charset=utf-8')
+                ->withStatus(400);
+        }
+
         $response->getBody()->write(
             json_encode(
                 [

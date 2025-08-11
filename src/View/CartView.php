@@ -5,6 +5,7 @@ declare(strict_types = 1);
 namespace Raketa\BackendTestTask\View;
 
 use Raketa\BackendTestTask\Domain\Cart;
+use Raketa\BackendTestTask\Domain\CartItem;
 use Raketa\BackendTestTask\Repository\ProductRepository;
 
 readonly class CartView
@@ -28,18 +29,40 @@ readonly class CartView
                 'email' => $cart->getCustomer()->getEmail(),
             ],
             'payment_method' => $cart->getPaymentMethod(),
+            'total' => 0,
+            'items' => [],
         ];
 
+        $cartItems = $cart->getItems();
+        if (empty($cartItems)) {
+            return $data;
+        }
+
+        $itemUuids = array_map(
+            fn(CartItem $item): string => $item->getProductUuid(),
+            $cartItems
+        );
+
+        $products = $this->productRepository->getByUuids($itemUuids);
+        $productsByUuid = [];
+        foreach ($products as $product) {
+            $productsByUuid[$product->getUuid()] = $product;
+        }
+
         $total = 0;
-        $data['items'] = [];
-        foreach ($cart->getItems() as $item) {
-            $total += $item->getPrice() * $item->getQuantity();
-            $product = $this->productRepository->getByUuid($item->getProductUuid());
+        foreach ($cartItems as $item) {
+            $product = $productsByUuid[$item->getProductUuid()] ?? null;
+            if ($product === null) {
+                continue;
+            }
+
+            $itemTotal = $item->getPrice() * $item->getQuantity();
+            $total += $itemTotal;
 
             $data['items'][] = [
                 'uuid' => $item->getUuid(),
                 'price' => $item->getPrice(),
-                'total' => $total,
+                'total' => $itemTotal,
                 'quantity' => $item->getQuantity(),
                 'product' => [
                     'id' => $product->getId(),
