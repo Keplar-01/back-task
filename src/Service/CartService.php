@@ -84,6 +84,9 @@ final readonly class CartService
             $this->logger->info('No existing cart found for session, creating a new one.', [
                 'session_id' => session_id(),
             ]);
+            // Создаю нового покупатяля, как загулшку. По идее тут мы должны как-то получить реального кастомера.
+            // Метод оплаты также должны откуда-то брать, как по мне, что в корзине присутствует метод оплаты
+            // как будто должен быть при оформлении заказа, а не в корзине. Решил ничего с этим не делать, так как по заданию не надо.
             $customer = new Customer(1, 'test', 'test', '', 'test@test.ru');
             $cart = new Cart(
                 Uuid::uuid4()->toString(),
