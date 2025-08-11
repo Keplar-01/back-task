@@ -36,6 +36,13 @@ final class Cart
 
     public function addItem(CartItem $item): void
     {
+        foreach ($this->items as $existingitem) {
+            if ($item->getProductUuid() === $existingitem->getProductUuid()){
+                $existingitem->addQuantity($item->getQuantity());
+                return;
+            }
+        }
+
         $this->items[] = $item;
     }
 }
