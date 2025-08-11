@@ -14,7 +14,7 @@ readonly class GetCartController
 {
     public function __construct(
         private CartView $cartView,
-        public CartService $cartService
+        private CartService $cartService
     ) {
     }
 
@@ -24,7 +24,6 @@ readonly class GetCartController
         $cart = $this->cartService->getCurrentCart();
 
         if ($cart === null) {
-            $response = new JsonResponse();
             $response->getBody()->write(
                 json_encode(
                     ['message' => 'Cart not found'],
